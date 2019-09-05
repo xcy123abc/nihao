@@ -1,0 +1,396 @@
+	git常用指令：
+		git --version	//查看版本
+		git init
+		git add <file>
+		git add *.js
+		git add .
+		git status
+		git commit     //提交到本地仓库
+		git commit -m 'changed app,js'
+		git push		//推送到仓库
+		git pull
+		git clone//	克隆：在远程仓库复制地址 使用git clone <地址> 
+
+		
+
+		
+		
+		
+	通用：
+		touch <file>	//在当前路径下创建文件
+		rm -rf .git		//删除目录和子目录
+		git checkout -- 文件名   //撤销刚刚对文件的操作（文件可能会回到对象区）
+
+		ctrl a
+		ctrl e
+		ctrl c 		//下一行
+		echo 'world' > <file>
+		vi 文件名
+		pwd 
+		ls		
+		cat 文件名			//查看文件的内容
+		
+		
+	====================================
+	邮箱 用户名
+			git config --global			//计算机
+			git config --system			//用户
+			git config --local			//项目  。git里看
+			
+			git config --global user.name 'xcy'
+			git config --global user.email '1245461604@qq.com'
+
+	========================================
+	三个区域
+		工作区	unstage
+		暂存区	staged
+		对象区
+	区域转换：
+	git rm --cached <file>		//缓存区到工作区
+	git reset head			//缓存到工作区，和上一个命令作用一样
+		
+
+	=======================================
+
+		（分布式id生成器）
+		* 分支的操作对主线没有影响，即在分支里面操作主线的文件，
+		  切换回主线后 在主线看不到
+		* 分支与主线合并 git merge <分支名>
+	=======================================
+	文件的忽略:
+			在gitignore文件里面写在gitignore文件里面写
+			/<file>
+			忽略整个文件夹
+			忽略文件：
+			.gitignore
+			
+			通配符 *
+				*.txt
+				!
+				dir/
+				dir/*.txt
+				dir/*/*.txt
+				dir/**/*/txt
+			空目录 ，默认忽略
+	==========================
+		
+	第三课
+		git rm 文件名		//删除已提交，文件到暂存区
+		rm 文件名          //删除文件 到工作区
+		git commit -m "文件名"   //彻底删除
+		
+		撤销删除的指令：
+		git cehckout -- x
+		git add x 
+		
+		git mv x xx		//重命名
+		git commit --amend - m ‘修正’		//注释重写
+		
+		
+	========================================
+	分支：
+			git branch
+			git branch x
+			git checkout x
+			git branch -d x		//不能删除自身 建议先合并 可以强行删除
+			git branch -D x		//强行删除
+			git branch -m x   	//重命名
+			git checkout -b x	//新建并切换
+			git merge			//合并
+			git push origin x	//
+			git diff   			//查看工作区与暂存区的差别
+			git diff --staged	//查看暂存区与版本库的差距
+			git diff branchname //比较分支的差距（与master分支比较）
+			git stash--
+			
+			细节：
+				1.如果在分支中进行了写的操作只是在工作区 在master主线中可以
+				  看到该操作  如果进行了commit 则master中无法查看
+				2.在一的情况下可以删除该分支
+	=======================================
+	日志：
+	git log
+	git log -最近的次数
+	git log --pretty
+	git log --graph
+	===========================================
+	标签：
+	
+	git tag xx
+	git tag -a xxx -m "xxx"
+	git tag	
+	git tag -d 标签名
+
+	简单标签：存储sha1值（当前commit）
+	有备注信息的标签：创建一个新对象，产生一个新的commit/sha1 存储信息
+					  包含当前commit和sha1值
+	推送标签：git push origin tagname
+			  git push origin --tags
+	注意：如果远程增加新标签 本地可以感知到
+			远程删除标签  pull无法感知到
+	删除远程标签：git push origin :refs/tags/tagname
+	========================================			
+	第四课：合并冲突
+	
+		分支：一份commit链  一条工作记录
+		分支名（master）：指向当前的提交（commit）
+		HEAD:指向当前分支（head-》分支名）
+
+		时间点不一样 （maste后） 如果不冲突  mastr可以通过merge直接赶上分支
+		称为fast forward
+		fast forward：1.两个分支归于一点commit
+					  2.没有分支信息（丢失分支信息）
+		merge 默认用f-f
+		也可以禁止 git merge --no-ff
+			1.不会归于一点，主动合并的分支，会前进一步
+			2.分支信息完整
+			
+		合并：
+			如果冲突：需要解决：git add xxxx
+								git commit -m 'xx'
+								* 两次提交 一次是最终提交 
+								一次是把对方的提交也拿过来
+								
+			时间点不一样，落后方可以fastforword，合并到前一方  所以不冲突
+			同一刻，要合并，就可能会冲突
+  	===================================================	
+	第五课：版本穿梭
+		git log --graph --pretty --abbrey-commit
+		合并add和commit
+			git commit -am '注释'
+		
+		在多个commit之中穿梭
+		git reset --hard HEAD^^
+		git reset --hard HEAD~n
+		git reset --hard sha1值的前几位（需要结合 git reflog使用）
+		git reflog 查看记录  记录所有操作 帮助我们实现撤回操作 需要借助良
+		好的注释习惯
+	===============================================
+	第六课	：checkout
+		checkout ：放弃修改  放弃的是工作中的修改 
+		reset：将之前的增加到暂存区中的内容  退回到工作区
+		
+		git checkout sha1值
+			1.修改后  必须提交
+			2.创建分支的好时机 git branc  mybranch 273562(sha1值)
+			git  cehckout mybranch
+			git cehckout master
+		分支重命名
+			git branch -m master master2
+			
+			
+		撤回操作：
+			git checkout -- 文件名		//撤回上次修改的内容（单位应该是对象区 或者 缓存区）
+			git cehckout -- .  //撤回上次的全部操作
+		删除操作：
+			直接右键删除，查看状态,(和缓存区不一致，所以会报红)，需要add这次操作后，使工作区和
+			缓冲区状态一至，git status 时才会显示删除了文件（工作中常用）
+			
+			命令：git rm 文件名  //工作与缓存区的文件一起删除
+				  这个命令还有一个防误删的好处：当工作区修改后，要用这个命令删除，则会报错提示
+				  要删除工作区还是暂存区
+				  git rm --catch filename //只删除暂存区的文件
+				  git rm --f 文件名		//强行把工作区的文件删除
+	=======================================================		
+	第七课：stach：保护现场	
+		 
+		1.建议 ：在功能未开发完毕前 不要commit
+		2.规订： 在没有commit之前  不能checkout分支（不在同一个阶段）
+		如果还没有将一个功能开发完毕 就要切换分支 建议先保存现场 再切换
+		
+		保存现场 git stash
+		还原现场（默认还原最近一次）
+			git stash pop (还原保存的内容 删除现场)
+			git stash apply 还原不删除 可以指定一次现场 
+			git stash apply stash@{1}
+		手工删除现场：git stash drop stash @{0}
+		查看现场 git stash list
+		
+		
+			(了解即可)不同分支，在同一个commit阶段里可以切换分支，不同阶段则不可以
+	
+		
+	第八课：diff 
+		blame：责任
+		git blame a.txt 查看a.txt 的所有提交commit sha1 值 以及每一行的作者
+		
+		diff 比较的是文件
+		git diff 比较的是区中的对象
+		git diff 暂存区和工作区的差距
+		
+		git diff head
+		git diff commit de sha1值:对象区和工作区的差异
+		git diff --cache commit的sha1值
+		git diff --cached HEAD 最新对象区和暂存区的差异
+	================================================	
+	第九课：推送到远程仓库
+	
+		命令行键入 git remote add origin https://github.com/xcy123abc/nihao.git
+				 git push -u origin master     xie124546		
+				 git config --list		//获取配置信息
+			     push不到远程参考问题：支线版本太低，没有readme.md
+		本机到远程：push
+			readme.md 说明文档
+			http：
+				1.在远程建立仓库
+				2.本机推 两行命令（本机与远超关联）(首次才需要)
+					git remote add origin https:github，，，
+					git push -u origin master
+			ssh配置：
+				本地私钥
+				远程公钥：公钥可以放项目和放账号两个地方:
+							项目的setting和账户的settings
+							主要：远程增加公钥时  1.删除回车符   2.可写权限
+				ssh - keyen 生成私钥
+				命令：
+					git remote add origin git@github.com:地址
+					git push -u origin master		
+				本地仓库会维护一个新分支（不修改 只读分支）：origin/master分支
+				（用于感知远程的情况）	
+				分支：	
+					master：很少改变
+					dev  开发分支 频繁改变
+					test 测试分支 开发后交给测试人员
+					bugfix 临时修改bug分支
+					
+		远程拉取：pull = fetch + merge
+			git clone git@github。。。 参数（文件名）
+				
+				
+			
+			
+		补充： rm * 删除非隐藏 命令行删除不过回收站
+				rm -rf /   删除计算机的跟目录
+		
+				远程带一个版本库.git
+				git remote show origin
+				git readme show  //查看远程
+				git branch -a
+				git branch -av
+	十一课：本地与远程冲突
+		提示操作：fetch fist + git pull			//fetch后到本地的远程分支
+		解决：1.pull（拉去远程准备解决）
+			  2.merge失败（vi编辑，解决冲突。）
+			  3.重新add commit
+		补充：
+			pull/push的另一个作用  改变指针 改变origin/master的指针	
+			git status 访问本地的状态 无法感知远程
+			git log origin/master 查看远程分支的日志
+			git remote show master //查看远程
+			分支就是一个指针 commit的sha1值
+			fetch后改文件 也会冲突
+			给命令起别名：git config --global alias.ch checkout
+			
+			
+	十三课：本地与远程分支的关联操作
+		
+		1.本地有 远程没有：
+			git push 直接推会报错，解决：
+											法1.git push -u origin dev
+											法2.git push --set -upastream origin test 
+		2.远程有 本地没有：
+		解决：
+			1.git pull  //把远程分支放追踪分支  本地还没有
+			2.法一：git checkout -b dev origin/dev
+			  法二：git checkout --track origin/dev
+		
+		
+		三种分支：一是远程分支 二是本地分支 三是本地的远程分支（追踪分支）
+		
+		删除远端的分支  git push origin  :test	
+						git push origin --delete dev
+						
+		远程到本地： git pull origin ccc2:ccc3  //拉远程的2到本地3
+					 git fetch origin master:refs/remotes/origin/helloword	
+					 //拉去远程的master分支到本地helloword
+						
+		本地没有a分支 但本地却感知远程的a分支
+		检测：git remote prune origin --dry-run 
+		清理无效的追踪分支 git readme prune origin
+		
+		
+		
+	十五课：gc
+		ref/   里面有heads/ remote/ origin/
+		Object/  放对象（对象里放了对象的全部东西）
+		
+	十六课：
+		bare裸库 ，没有工作区 存在远程仓库
+		git init --bare  （不能add）
+		
+		子模块：在一个残酷中引用另一个仓库的代码（单向操作）
+			git submodule add git@github。。。
+			子仓库更新后，需要在子仓库里pull 然后在主仓库里push
+			git submodule foreach git pull
+			
+		克隆带有子模板的仓库：需要特殊的指令，否则克隆不到子模板里面的东西
+		git clone git@github。。。 --recursive
+		
+		子模板的删除：
+			1.删除暂存区	git rm -cached B
+			2.删除工作区	rm -rf B
+			3。删除配置文件  .gitmodules
+			4.提交到对象区	
+			5.推送到远程
+			这样整个子模块就从本地和远程仓库消失了
+			
+		补充：实用ssh免密钥：
+					1.本地与远程关联（公钥放远地后，关联远程）
+						git remote add origin git@github。。。
+					2.关联分支：git push -u origin master
+	十七：subtree				
+		git remote add subtree-origin git@github。。。
+		git subtree add -P subtree subtree-origin master 等价于 gir subtree add --prefix 
+		subtree subtree-origin master
+		
+		另一种方式：git subtree add -P subtree2 subtree-origin master --squash
+		squash：减少commit的次数
+				加了之后 会产生新的提交 容易冲突:
+					如果是同一个祖先 则可能不会冲突
+					如果不是同一个祖先 很可能冲突
+					解决：	
+						vi add commit push
+				结论 要么都加 要么都不加 (git subtree开头的)
+				
+				
+		核心流程：
+			子-》父
+				1.修改子工程  push
+				2.本地更新子工程   git subtree pull -P subtree subtree-origin master
+				3.父推到远程
+			父-》子
+				git subtree push-P subtree subtree-origin master
+	18.subtree父子工程交互
+	
+	19.cherry-pick:复制分支节点（一次一个，不能跨越节点）
+		
+		增：git cherry-pick sha1值
+		删：
+			1.退： git checkout sha1值
+			2.删节点  git branch
+			3.新建分支
+	20.rebase:变基（衍合）（会改变提交历史）
+		 例子：
+			B转移到A：
+				pick在a中进行
+				变基在b中进行
+			会冲突：a：	解决：vi  add  git tebase --continue
+					b： 忽略：git rebase --skip
+			终止：git rebase --abort
+			建议：
+				1.rebase 分支旨在本地操作
+				2.不在master 上操作
+				
+					
+		 
+	21.gradle
+	22.gretty进行remote测试
+	23GitLab
+	
+		
+		
+		
+		
+		
+		
+		
