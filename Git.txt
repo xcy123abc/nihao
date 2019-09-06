@@ -91,7 +91,8 @@ git常用指令：
 	git diff --staged	//查看暂存区与版本库的差距
 	git diff branchname //比较分支的差距（与master分支比较）
 	git stash--
-	
+	删除远程分支
+	git push origin --delete dev
 细节：
 	1.如果在分支中进行了写的操作只是在工作区 在master主线中可以
 	   看到该操作  如果进行了commit 则master中无法查看
