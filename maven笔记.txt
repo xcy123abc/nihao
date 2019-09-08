@@ -1,0 +1,93 @@
+第五课：
+	1.三个生命周期：清理生命周期，默认生命周期，站点生命周期
+	2.依赖：
+		* 依赖的范围 有效性
+			compile test provide
+		* 依赖排除 <exclusions>
+					<exclusion>
+					 <><!-- jar包坐标--> 
+		* 通过maven整合多个项目（模块）之间的依赖：
+			1.放入仓库（install命令）
+			2.添加依赖（在配置文件pom中添加模块的坐标）
+		* 依赖的传递性：
+			a依赖b b依赖c
+			则当且仅当b对c的依赖范围是comple的条件下 a才会依赖c
+第六课：
+	1.依赖的传递性：见第五课
+	2.依赖原则
+		为了防止冲突 有三个依赖原则
+			a.路劲最短原则：
+			b.pom中后生命的优先级高
+			c.假设A有两个子模板B,C，两个子模板都依赖同一个jar包，则
+			  在A的pom中先声明的子模板依赖的jar包优先级高
+	3.统一版本：
+		通过maven配置pom 统一jdk
+	4.统一编码：
+第七课：maven继承的实现
+	1.继承的好处：a.可以通过父工程统一管理依赖的版本
+	              b.子工程可以使用父工程的所有依赖
+	2.实现：
+		通过pom配置：
+			父：<dependcmanergment>
+				 <d    >
+				  <d   g>
+					<d  a>
+			子：加入父工程的坐标 加入两者的相对路径 声明依赖
+	补充：
+		打包方式：jar war pom
+		    java工程用jar
+			web工程用war
+			聚合，父类用pom	
+第八课：maven聚合的实现
+		0.引言：
+			假如项目2依赖项目1，则项目2执行之前，需要先将项目1执行install命令
+			打包到本地仓库，才能执行，如果依赖很多个，则需要打包很多次。以上情况可以使用
+			聚合一次性解决（打包的操作）
+		1.好处：
+			避免前置工程繁琐的install操作
+		2.实现：
+			<modules>
+			  <module>
+				
+			
+		3.注意：
+			a只能配置在打包方式为pom的工程中
+			b以后操作总工程，子工程会自动操作（install）
+			c 指令clean清楚的是target目录 不是清楚install到本地仓库的文件
+			d maven项目能够识别的：自身包括本地仓库
+
+第九课：maven创建 布置 web工程
+	步骤：
+		1.在配置文件中添加依赖（servlet-api）
+		2.新建web.xml
+		3.开发后打war包发送给其他团队
+第十课：私服的搭建
+	步骤：
+		1.下载 解压 安装nexus
+		2.  .properties  地址
+		3.进入doc窗口  nexus的bin目录 
+		4.输入指令：nexus.bat install
+		5.启动：doc窗口输入命令：nexus.bat start
+		6.浏览器登陆： 账号/密码  ：  admit/admit123
+		7.pom配置：（截图）
+		8.修改密码：在setting.xml中配置（截图）
+		9.下载依赖需要先配置pom来激活（截图）
+		10.
+		
+
+
+
+
+
+遇到的问题：
+	1.
+	加入两个依赖jar包后，还是遇到几个报错。
+		1.org.apache.jasper.JasperException: Unable to compile class for JSP:
+		2.org.apache.jasper.compiler.DefaultErrorHandler.javacError(DefaultErrorHandle
+	上面是网页报错和tomcat报错，还有几个没有记录。
+	最后解决：1.导入依赖jar包
+			  2.配置jdk1.7
+			  3.配置tomcat7（用tomcat7：run指令）
+			
+	困扰大半个月的问题解决。
+			
