@@ -1,0 +1,103 @@
+git init
+git add .
+git commit -m 'first commit '
+git config --local user.name 'xcy'
+git config --local user.email '1245461604@qq.com'
+git remote add origin https:
+git push -u origin master
+git pull
+git reset --hard HEAD^^
+git reset --hard sha1
+git tag -n
+git tag -m 'shuo ming' tagname
+git push tagname
+git tag -d tagname
+git push  :tagname
+git rev-list tagname | head -n 1
+git checkout -b branchname
+git branch -d branchname
+git push -u origin dev
+//
+1.git pull  //把远程分支放追踪分支  本地还没有
+2.法一：git checkout -b dev origin/dev
+
+git push origin --delete dev
+
+检测：git remote prune origin --dry-run 
+清理无效的追踪分支 git readme prune origin
+
+
+
+日常：
+	git clone 
+	touch filename //
+	rm -rf wenjianming  //删除目录和子目录
+	git checkout -- filename   //撤销对文件的操作
+	echo 'world' > filename    //
+	pwd   //查看当前目录
+	ls    //查看当前目录的文件
+	cat filename   //查看文件内容
+	git merge branchname
+	git commit -am 'a'		//提交和添加一步完成（有新文件时不可用）
+	git push origin x	//
+	git diff   			//查看工作区与暂存区的差别
+	git diff --staged	//查看暂存区与版本库的差距
+	git diff branchname //比较分支的差距（与master分支比较）
+	git push origin --delete dev   //删除远程分支
+	git log -最近的次数
+	git log --graph
+	git tag -a xxx -m "xxx"  //标签重命名
+	git push origin tagname
+	git push origin :refs/tags/tagname   //删除远程标签
+	查对应的提交值：git rev-list tagname | 	head -n 1
+	切换：git checkout tagname
+	创建：git tag -m 'zhe li xie shuo ming ' testTag1
+	
+设置账号==============
+	git config --local user.name 'xcy'
+	git config --local user.email '1245461604@qq.com'
+区域转换==============
+	git rm --cached <file>		//缓存区到工作区（单个文件）
+	git reset head			//缓存到工作区，和上一个命令作用一样（上次提交的全部文件）
+删除（撤销）文件==============
+	//（好像不对）git rm 文件名		//删除已提交，文件到暂存区（本地也没有了）
+	//（好像不对）rm 文件名          //删除文件 到工作区
+	//（好像不对）git commit -m "文件名"   //彻底删除
+	rm -rf wenjianming  //删除目录和子目录
+撤销删除========
+	git cehckout -- x
+	git add x 
+	
+	git mv x xx		//重命名
+	git commit --amend - m ‘修正’		//注释重写
+查看远程==============
+		git remote show origin
+		git readme show  //查看远程
+		git remote show master //查看远程
+
+		git branch -a
+		git branch -av
+分支操作==============
+	git branch -m x   	//重命名
+	git checkout -b x	//新建并切换
+	
+	git checkout sha1值
+		1.修改后  必须提交
+		2.创建分支的好时机 git branc  mybranch 273562(sha1值)
+		git  cehckout mybranch
+		git cehckout master
+	分支重命名
+		git branch -m master master2
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
