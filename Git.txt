@@ -107,10 +107,10 @@ git常用指令：
 	git log --graph
 ===========================================
 标签：	
-	git tag xx
-	git tag -a xxx -m "xxx"
-	git tag	
-	git tag -d 标签名
+	git tag xx   //创建标签
+	git tag -a xxx -m "xxx"  //标签重命名
+	git tag		//查看标签
+	git tag -d 标签名   //删除标签
 
 简单标签：存储sha1值（当前commit）
 	有备注信息的标签：创建一个新对象，产生一个新的commit/sha1 存储信息
@@ -157,7 +157,7 @@ git常用指令：
 	git reset --hard sha1值的前几位（需要结合 git reflog使用）
 	git reflog 查看记录  记录所有操作 帮助我们实现撤回操作 需要借助良
 	好的注释习惯
-===============================================
+=====================ZZ==========================
 第六课	：checkout
 	checkout ：放弃修改  放弃的是工作中的修改 
 	reset：将之前的增加到暂存区中的内容  退回到工作区
