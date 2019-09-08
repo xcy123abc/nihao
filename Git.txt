@@ -120,6 +120,16 @@ git常用指令：
 	注意：如果远程增加新标签 本地可以感知到
 			远程删除标签  pull无法感知到
 	删除远程标签：git push origin :refs/tags/tagname
+	
+	补充：标签也叫里程碑
+		创建：git tag -m 'zhe li xie shuo ming ' testTag1
+		查看：git tag -n10      //查看十条
+		查对应的提交值：git rev-list tagname | 	head -n 1
+		推送：git push --tags
+		删除：git tag -d tagname
+		切换：git checkout tagname
+
+		
 ========================================			
 第四课：合并冲突
 	
@@ -382,3 +392,10 @@ git常用指令：
 21.gradle
 22.gretty进行remote测试
 23GitLab
+==============================================
+版本冲突：
+	远程为a，有人提交后为b，我为a，提交后为b，则可能无法推送。
+	如果别人推送的和我推送的区域不一样，则系统会自动合并所有修改
+	如果修改的地方一样解决：打开冲突的文件 保留一个人的修改即可。之后用add声明冲突已经解决 然后commit
+	
+		
