@@ -35,10 +35,10 @@ git常用指令：
 	git config --global user.email '1245461604@qq.com'
 
 ========================================
-三个区域
+****三个区域
 	工作区	unstage
 	暂存区	staged
-	对象区
+	对象区  
 区域转换：
 	git rm --cached <file>		//缓存区到工作区（单个文件）
 	git reset head			//缓存到工作区，和上一个命令作用一样（上次提交的全部文件）

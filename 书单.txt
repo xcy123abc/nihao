@@ -1,10 +1,10 @@
-	《深入理解java虚拟机》  2.3.7.12.13重点，4了解
+	//《深入理解java虚拟机》  2.3.7.12.13重点，4了解
 
-	《java并发编程的艺术》   2.3.4.5重点，其他按需
+	//java并发编程的艺术》   2.3.4.5重点，其他按需
 
-	《MYSQL技术内幕:InonDB存储引擎(第二版)》   567重点
+	//《MYSQL技术内幕:InonDB存储引擎(第二版)》   567重点
 
-	《深入分析java web 内幕(许令波)》    都不错，按需
+	//《深入分析java web 内幕(许令波)》    都不错，按需
 
 	《spring技术内幕(计文可)》       23重点，6章按需，枯燥看“五月的仓颉”博客
 
@@ -14,8 +14,8 @@
 
 	///《Java核心技术》    (前六章)
 
-	《Spring源码深度解析》    通读
+	//《Spring源码深度解析》    通读
 
-	《Spring实战》     (核心是IOC AOP, 然后是Spring MVC)
+	//《Spring实战》     (核心是IOC AOP, 然后是Spring MVC)
 
 	MySQL，Mybatis，Redis，Servlet(水到渠成) JS、HTML(会简单的)

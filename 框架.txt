@@ -1,0 +1,1717 @@
+mybatis：
+	
+	入门案例：（代码test01）
+		总结 使用mybatis框架不用写dao实现类 其中配置映射文件的那部分就相当于在实现方法了
+			 测试的时候 用代理模式 用sqlsession。getmapper（接口字节码）获取接口的对象  就相当
+			 于实例类的对象了 然后就可以执行方法 下面是入门案例的编写过程
+			 
+	入门案例之————mybatis的环境搭建：
+		1.创建maven工程 导入jar包（mybatis，mysql-connector-java，junit，log4j）
+		
+		2.创建实体类（实现接口 Serializable ） 和dao接口（写所需方法）
+		
+		3.创建mybaris的主配置文件（里面会映射接口的配置文件）
+			sqlmapConfig.xml
+				a.约束
+				<configuration>
+				b.配置环境
+					环境s下配置mysql环境（大环境属性为default，值为mysql  环境属性id的值为mysql）
+					环境里配置事务管理 环境内部配置一个type=“JDBC"（内部指位置与标签同一等级）
+					配置数据源  内部 type是”POOLED“  其中用property配置四个参数 驱动 数据库 用户名和密码
+				c.配置映射<mappers><mapper resource="dao/IUserDao.xml"/>
+				eg：
+					<?xml version="1.0" encoding="UTF-8"?>
+					<!DOCTYPE configuration
+							PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+							"http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+					<!-- 主配置 -->
+					<configuration>
+						<environments default="mysql">
+							<environment id="mysql">
+								<transactionManager type="JDBC"></transactionManager>
+								<dataSource type="POOLED">
+									<!-- -->
+									<property name="driver" value="com.mysql.jdbc.Driver"/>
+									<property name="url" value="jdbc:mysql://localhost:3366/xcy"/>
+									<property name="username" value="root"/>
+									<property name="password" value="124546"/>
+								</dataSource>
+							</environment>
+						</environments>
+						<mappers>
+							<mapper resource="dao/IUserDao.xml"/>
+						</mappers>
+					</configuration>
+					
+		4.创建接口映射配置文件（一个 接口对应一个配置文件）
+			IUserDao.xml（IUserMapper.xml）
+				a. 约束
+				b. 标签mapper 内部需要namespace 值为接口位置的全限定类名
+				c. 在mapper标签里配置方法
+					相应标签（select）内部再写id  和resulttype 标签中写sql语句
+					eg：<select id="findAll" resultType="domain.User">select * from user</select>
+
+				eg：
+					<?xml version="1.0" encoding="UTF-8"?>
+					<!DOCTYPE mapper
+							PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+							"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+					<mapper namespace="dao.IUserDao">
+						<select id="findAll" resultType="domain.User">
+						  select * from user
+						</select>
+						<insert id="saveUser" parameterType="domain.User">
+							insert into user(username,address,sex,birthday)value (#{username},
+							 #{address},#{sex},#{birthday})
+						</insert>
+					</mapper>
+					
+		5.还需要一个log4j。properties配置文件
+			eg：# Set root category priority to INFO and its only appender to CONSOLE.
+				#log4j.rootCategory=INFO, CONSOLE            debug   info   warn error fatal
+				log4j.rootCategory=debug, CONSOLE, LOGFILE
+
+				# Set the enterprise logger category to FATAL and its only appender to CONSOLE.
+				log4j.logger.org.apache.axis.enterprise=FATAL, CONSOLE
+
+				# CONSOLE is set to be a ConsoleAppender using a PatternLayout.
+				log4j.appender.CONSOLE=org.apache.log4j.ConsoleAppender
+				log4j.appender.CONSOLE.layout=org.apache.log4j.PatternLayout
+				log4j.appender.CONSOLE.layout.ConversionPattern=%d{ISO8601} %-6r [%15.15t] %-5p %30.30c %x - %m\n
+
+				# LOGFILE is set to be a File appender using a PatternLayout.
+				log4j.appender.LOGFILE=org.apache.log4j.FileAppender
+				log4j.appender.LOGFILE.File=d:\axis.log
+				log4j.appender.LOGFILE.Append=true
+				log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+				log4j.appender.LOGFILE.layout.ConversionPattern=%d{ISO8601} %-6r [%15.15t] %-5p %30.30c %x - %m\n
+
+		注意：  1.包和目录的创建不一样
+				2.保持dao接口和dao配置文件的文件目录结构相同
+				3.映射配置文件的mapper标签的namespace属性的取值必须是接口的全限定类名（src/main/java往后开始写起）
+				4.映射配置文件的操作配置（select），id属性取值必须是dao接口的方法名
+			满足上面条件  开发中就无需再写dao实现类
+	入门案例：	
+		1.读取配置文件 生成字节输入流   
+			in = Resources.getResourceAsStream("SqlMapConfig.xml");
+		2.创建SqlSessionFactory工厂（目的是获取sqlsession）
+			SqlSessionFactory factory = new SqlSessionFactoryBuilder().build(in);
+		3.获取sqlsession（）
+			sqlSession = factory.openSession();
+		4.创建dao接口的代理对象
+			userDao = sqlSession.getMapper(IUserDao.class);
+		5.执行方法
+			 List<User> users = userDao.findAll();
+		6.释放资源
+			 //提交事务
+			sqlSession.commit();
+			//6.释放资源
+			sqlSession.close();
+			in.close();
+		注意：记得在映射文件中配置结构封装到哪个实体类中（全限定类名）
+		
+	上面是xml配置的
+	下面是注解搭建（在xml中改编）（代码test02）
+		1.需要主配置文件
+		2.接口映射配置文件删除  在接口的方法上使用@Select注解 并且只当sql语句
+		3.主配置文件的mapper部分  把resource属性改为class属性 值是dao接口的全限定类名
+		4.配置pom
+	
+	
+	mybatis第二部分 
+		1.增删改查的语句
+		2.<delete>或者其他标签的内部属性 比如 resultType有时候需要改成parametertype （两者没有关系hhh）   
+			也可以理解为需要带参数的方法需要怎么配置  配置parametertype  然后用#{}来接受方法的参数
+		3.模糊查询建议在测试时使用占位符 因为这种有预编译处理（#{}与￥{}的区别，建议使用#{}）
+		4.keypropres对应实体类的属性
+			keyColumn对应表的属性
+			order属性
+		5.OGNL表达式
+			0GNL表达式:
+				0bject Graphic Navigation Language
+				对象图	导航语言
+				它是通过对象的取值方法来获取数据。在写法上把get给省略了。
+				比如:我们获取用户的名称
+				类中的写法: :user. getUsername () ; 
+				OGNL表达式写法: yser. username
+				mybatis中为什么能直接写username,而不用user.呢:
+				因为在parameterType中已经提供了属性所属的类，所以此时不需要写对象名
+				
+		6.实体类的属性和表的属性不一样 解决：
+			1.改ognl表达式和keyproperid（开发效率快）注意第二种的映射，其中resultType要改为resultmapper
+			2.在映射的配置里sql语句的属性取别名（执行效率高）
+		7.断点调试 源码追踪：
+			右键接口名，选择diagran ，第一个选项，出来一个接口的正方形，右键，选showInter。。。
+			然后选实现类   
+		8.	（编写实现类的）
+			PreparedStatement对象   它的执行方法
+
+			execute :它能执行CRUD中的任意一种语句。 它的返回值是-个boolean类型 ,表示是否有结果集。有结果集是true 
+					 没有结果集是false.
+
+			executeUpdate :它只能执行CUD语句,查询语句无法执行。他的返回值是影响数据库记录的行数
+
+			executeQuery :它只能执行SELECT语句,无法执行增删改。执行结果封装的结果;集ResultSet对象
+			
+		9.properties属性	
+			1.支持在property 的value属性中引用别的property的name
+				eg：配置数据源的时候 可以先配置一个properties 里面是四个property配置的数据源数据 驱动 数据库等等
+					然后在数据源配置时用value=”${driver}引用
+			2.引用配置文件
+				eg：《properties resource=“xxx。properties”》《/properties》（配置文件在类路径下）===========？？类路径
+					同样在property的value=“${driver}”  引用
+		10.url与uri		
+				
+		11 标签《typeAliases》  给类起别名，只能配置domain类中  type全限定类名  和  alisa别名
+		
+		12 package   在主配置文件的mapper里 用该标签的name属性 指定 dao接口所在的包名 就不需要resource或者class		
+		
+	第三部分：连接池 事务 动态sql语句   多表操作 
+	
+		概述：
+			mybatis中的连接池和事物     原理了解  应用会用
+			动态sql语句					会用
+			多表操作					掌握会用
+			
+		连接池：实际开发中都会使用连接池 因为可以减少获取连接所需要的时间
+				连接池就是一个存储连接的容器（连接池的底层是ArrayList） 
+				其实就是一个集合对象 该集合必须是线程安全的 （不能两个线程同时拿到一个连接）
+				改集合还必须实现队列的特型 先进先出
+			分类：POOLED     pooled  没有用c3p0和dbcp，mybatis自己实现的一套连接池的思想
+							 也是用jdbc规范中的javax。sql。datasource接口实现的方式
+				  UNPOOLED
+				  JNDI
+			这里有一段话没有记录======================主号搜连接池没有记录========================？？
+			
+		事务：事务可以用openSession（true）  开启
+		
+		动态sql语句：
+			《id》
+				and
+				
+			范围查询配置：
+				SQL 语句： select * from user where id in (?)
+				<forea >  用于遍历集合 
+					属性；
+						collection:  遍历的集合元素 编写时不能使用#{}
+						open：  代表语句的开始部分
+						close： 代表结束的部分
+						iten：  代表遍历集合的每个元素  生成的变量名
+						sperator： 代表分隔符
+				<>
+			eg：  
+				<select id="findUserInIds" resultMap="userMap" parameterType-"queryvo" >
+					select * from user
+				< where>
+					<if test="ids ！= null and ids.size( )>0">
+						<foreach collection="ids" open="and id in (" close=")" item "uid" separator-" , ">
+							#(uid)
+						</foreach>
+
+		多表操作：一对多
+				  多对一
+				  一对一
+				  多对多
+
+		
+		mybatis缓存
+			延迟加载
+			立即加载
+			一对多 多对多   一般是延迟加载
+			多对一 一对一   一般是立即加载
+		eg：
+			一对多为例  实现延迟加载
+			1.新建工程 2. 复制文件  pom 
+			2.配置延迟加载
+			3.再配置 （mybatis文档里，找xml配置，setting配置     lazyloadongenaoble
+			4.主配置里（配置里加settings配置 需要两个）
+
+		缓存：存在于内存之中的临时数据
+		为什么使用缓存：减少和数据库交互的次数 提高执行效率
+
+		一级缓存和二级缓存：
+		
+			一级：sqlsession对象的缓存（自动开启）
+				执行查询时 查询结果会存入到sqlsession为我们提供的区域中
+				该区域的结构是一个Map  当我们再次查询时 mybatis会先查询缓存区域
+				sqlsession对象消失时 mybatis的一级缓存也就消失了
+				调用updata方式，缓存会被清空（sqlsession。clearCache（）也可以清空缓存）
+				
+				
+			二级：
+				定义：
+					指mybatis中SqlSessionFactory对象的缓存  同一个对象创建出来的sqlsession共享缓存
+				开启：
+					1.在主配置文件中开启支持  <settings>
+												<setting name="cacheEnable" value="true"/>
+					2.在接口配置文件中 mapper标签里加《cache/》
+					3.select标签中开启	select的内部属性 useCache=“ture”
+				存放的是数据  而不是对象
+			
+			
+	Mybatis的注解开发：
+		注解开发：
+			1.新建maven工程 配置pom 打包方式选jar
+			2.pom导入四个依赖（mybatis开发就够了）
+			3.新建实体类（实现序列化接口）（getter和同string）
+			4.新建接口
+
+			5.写主配置文件（config约束）其他手写（在resources目录下）写一个config，里面
+				1.引入jdbc配置文件（用《properties resources=“文件名”》）
+			  
+					配置别名（）
+					《typeAliases》
+					《package  name=“实体类所在的包名”》 
+			  
+				2.用《environments》配置环境
+					第一个有default的属性，值为mysql
+					然后是《environment id=“mysql”》
+							《transactionManage type=“JDBC”》《/》
+							《dataSource type=“POOLED”》
+								datasource里要用property配置四个信息
+								这里是使用第一步引入的配置文件
+								eg：《property name=“driver” value=“${jdbc.driver}”》《/preproperty》
+				
+				3.映射dao接口的所在位置（用mapper）
+					《mapper》
+						《package naem=“接口所在的包的位置”》《/package》
+			 
+				
+			 * 配置文件都在rsource目录下（除非是接口的映射，才需要和接口的结构相同）    
+
+			6. 写注解（注解有四种，selete，insert，update，delete）
+			   接口方法上@Selete（“sql语句”）
+
+			
+			7.测试和使用注意事项
+				创建测试类
+					1.获取字节流（用resources（ibatis的包）的getResourcesAsString的方式，传入主配置文件的名字获取流）
+					2.根据流构建sqlsessionfactory（使用sqlsessionfactorybuilder。build（in）获取）
+					3.生成一个sqlsession
+					4.使用sqlsession获取代理对象
+						其中，获取代理对象，使用session的getmapper方法，参数传递对应接口的类字节码文件
+					5.执行dao
+					6.释放资源
+				注意：1.使用注解开发的时候，就不能在同一个接口中使用配置开发，会报错
+					   不管主配置文件有没有使用mapper映射配置文件
+					  2.注解开发的获取对象也是要使用代理模式
+		常用注解：
+			@select
+			@Results(
+				id="userMap"  value={
+				@Result(id=tyre , colum="",property=""),
+				@Result(colum="",property=""),
+
+				}
+			)
+			@ResultMap("userMap")
+			@CacheNamespace(blocking = true )
+			@Result(colum="",property="" ,one=@one(select = "com.itcast.dao.IUserDao.findById",fetchType.EAGER))
+			
+		
+	
+Spring：
+	耦合：程序见的依赖关系（类，方法之间）
+	
+	获取流的时候，需要一个文件的路径，这是相对和绝对路径都不合适
+	需要用加载器的getResourceAsStean的方法获取指定文件的流（参数是文件的名字）
+	
+	加载properties文件的方法，获取一个properties对象，调用load方法，参数是指向
+	目标文件的流（类加载器获取流）
+	
+	反射Class。forName参数要是全限定类名。方法的返回值是该类的类***
+	然后调用invo方法获取对象
+	
+	业务层和持久层，很少包含可以修改类成员，所以单例对我们来说效果更好
+	
+	控制反转：把创建对象的权力交给框架或者工厂，它包括依赖注入（DI）和依赖查找
+	
+	spring文档，其中的libs，有63个，实际21个，三个一组们没有任何后缀，是编译用的，
+	（导包），，看文档，用doc后缀的，，看源码，用sources
+	
+**搭建spring基于xml的ioc
+		1.创建maven工程
+		2.pom配置打包方式（jar）
+		3.pom中配置spring IoC的依赖jar包（spring-context） sql驱动
+		4.创建bean.xml
+			a.导入文件约束（网页搜xmls）
+			b.对象交给spring管理（bean配置）
+				id  对象的别名
+				class 全限定类名
+		5. 测试使用：（获取容器，更具id获取对象）
+			a.获取核心容器对象（参数是bean.xml）
+				ac = new ClassPathXmlApplicationContext(bean,xml);
+			b. ac.getBean(id,类字节码文件);  //获取对象
+			
+	补充：ApplicationContext的三个常用实现类：
+     *      ClassPathXmlApplicationContext：它可以加载类路径下的配置文件
+								要求配置文件必须在类路径下。不在的话，加载不了。(更常用)
+								
+     *      FileSystemXmlApplicationContext：它可以加载磁盘任意路径下的配置文件
+									(必须有访问权限）
+     *
+     *      AnnotationConfigApplicationContext：它是用于读取注解创建容器的
+		
+		核心容器的两个接口引发出的问题：
+     *  ApplicationContext:     单例对象适用              采用此接口
+     *      它在构建核心容器时，创建对象采取的策略是采用立即加载的方式。
+			也就是说，只要一读取完配置文件马上就创建配置文件中配置的对象。
+     *
+     *  BeanFactory:            多例对象使用
+     *      它在构建核心容器时，创建对象采取的策略是采用延迟加载的方式。
+			也就是说，什么时候根据id获取对象了，什么时候才真正的创建对象。
+			
+			
+spring对对象的管理：
+		1.创建bean的三种方式
+			a.  bean  使用bean标签，配以id和class属性之后，且没有其他标签时
+					  采用的就是默认构造函数构造对象，此时如果类没有默认构造函数 则无法创建
+					  
+			b. bean 其中配置 id factory-bean  factory-method 标签 
+			   使用类中的方法创建对象，存入spring容器
+			   
+			c. 使用工厂（类）中的静态方法创建对象
+				bean 其中配置class factory-method 标签
+			
+		2.bean对象的作用范围
+			bean标签的scope属性：
+				作用：指定bean的作用范围
+				取值：
+					singleton：单例的（默认值）
+					prototype：多例的
+					request：作用于web应用的请求范围
+					session：作用于web应用的会话范围
+					global-session：作用于集群环境的会话范围（全局会话范围）
+									当不是集群环境时 它就是session
+		3.bean对象的生命周期
+				单例对象的生命周期：
+					出生：容器被创建时对象出生
+					或者：容器还在，对象一直活着
+					死亡：容器销毁 对象消亡
+					总结：单例对象的生命周期 与容器相同
+				多例对象的生命周期：
+					出生：当我们使用对象时spring框架为我们创建
+					活着：对象只要在使用过程中就一直活着
+					死亡：当对象长时间不用
+	
+spring的依赖注入（DI）
+	依赖关系的维护 就称为依赖注入
+	依赖注入的数据（三类）：
+		基本类型和String
+		其他bean类型
+		复杂类型/集合
+	注入方式：三种
+		1.使用构造函数提供
+			构造函数注入：
+				标签：constructor-arg
+					标签中的属性：
+						type
+						index
+						name：     指定参数名称
+						=============两组
+						value：用于提高基本数据类型和String类型
+						ref：  用于提供容器之中的bean对象
+			优势：获取bean对象时 注入数据是必须操作 否则无法创建对象
+			弊端：改变bean对象的实例化方式 使在创建对象时  如果用不到这些数据也必须提供
+		* 2.使用set方法提供
+			标签：property
+			标签属性：
+				name：
+				value：
+				ref：
+			优势：创建对象时没有明确的限制 可以直接使用默认构造函数
+			弊端：如果某个成员必须有值 则获取对象是有可能set方法没有执行
+			eg：<property name="name" value="zhangsan"></property>
+			
+		* 复杂类型注入
+			给list结构的集合注入的标签
+				list array set
+			给map结构的集合注入的标签
+				map props
+			结构相同 标签可以互换
+			
+		3.使用注解提供
+			
+上面是使用配置bean.xml文件开发
+下面是使用注解开发
+	下面是使用注释开发的步骤：
+		1.准备实体类，接口，配置文件，数据库表格      
+		2.使用注解，把类加入容器。     
+		3.配置文件,需要约束，在收藏里找，code-》查找   xmls： 找到有context的，复制        
+		4.配置创建容器要导入的包（context:component-scan bese-pack=" "> ）    
+		
+用于创建对象的注解
+		Component:
+			作用：用于把当前类对象存入spring容器中
+			属性：
+				value：用于指定这个对象（bean）的id  默认是当前类名，首字母小写
+		Controller: 一般用在表现层
+		
+		Service: 一般用在服务层
+		Repository:一般用在持久层
+		上面四个注解的后三个的作用和属性与第一个一模一样
+		
+用于注入数据的注解
+		作用类似在xml配置文件中写一个<property>标签
+		Autowired：
+			作用：自动类型注入，容器有唯一一个类型和变量类型相匹配，则注入成功
+			出现位置：变量 方法
+			细节：使用注解注入时 set方法就不是必须的了
+		Qualifier:
+			作用: 	在按照类型注入的基础之上再按照名称注入 在给类成员注入时不能单独使用
+					但是在给方法参数注入时可以
+			属性：
+				value：用于指定注入bean的id
+				
+		Resource:
+			作用：直接按照bean的id注入 它可以独立使用
+			属性：
+				name：用于指定bean的id
+				
+		以上三个用来注入其他bena类型的数据   基本数据类型和String类型用Value实现
+		集合类型的注入只能通过xml配置实现
+		
+		Value:
+			作用：注入基本数据类型和String类型
+			属性：	
+				value：用于指定数据的值，也可以使用spring中的sqEL
+				sqEL写法： ${表达式}
+	
+用于改变作用范围的注解
+		Scope
+			作用：指定bean的作用范围
+			属性：	
+				value：指定范围的取值  （singleton  prototype）
+
+和生命周期相关 （了解）
+	PreDestory：用于指定销毁方法
+	PostConstruct：用于指定销毁方法
+	
+使用新注解，完全代替xml配置文件
+	1.写一个类代替xml配置文件
+		@Configuration  作用：指定当前类是一个配置类
+	
+		@ComponentScan  作用：指定创建容器时要扫描的包
+						属性：指定包名
+						
+	2.创建一个方法，返回值是一个对象
+		使用注解 把这个对象放到容器
+		@bean
+			作用：用于把当前方法返回值存入spring容器中
+			属性：
+				name：用于指定bean的id  默认是当前方法的名称
+			细节：使用注解配置方法时  如果方法有参数 框架会查找容器中有无可用对象
+					查找方式和Autowired注解的作用是一样的
+			
+	3.更换测试列类中获取容器的方法
+		用 AnnotationConfigApplicationContext( xxx.class);获取容器
+		测试的时候，需要换一个类来获取容器。参数是代替配置文件的类的字节码
+		测试的时候测试查询和增加就够了
+		
+		注意：配置后，虽然xml文件已经没有了，并且可以运行，但是qrunner不是单例的
+				和xml配置的效果不一样  所以qrunner需要用注解实现多例
+			@Scope（"prototype"）
+			
+	优化使用全注解开发
+		1.新注解import：使得配置有主次之分，更合理
+			@Import（jdbcConfig.class）
+			
+		2.把jdbc的配置提取成properties文件
+			a.@PropertySource（“classpath；jdbcConfig。properties”）
+				使用注解，指定配置文件的位置
+				属性：
+					value：指定文件的名称和路径
+						关键字：classpath，表示类路径下
+			b.配置类（主配置）中     类增加属性，保存连接数据库需要的数据     
+			c.用注解给属性注入值，实现初始化
+				@Value（“${jdbc.username}”）
+			
+		
+		3.优化测试类：spring整合junit的配置
+			步骤：
+				1. 导入坐标 spring整合junit的jar
+				2.@Runwith（SpringJUnit4ClassRunner.class）  
+					替换原来的main方法
+					
+				3.@ContextConfigration(classes=SpringConfigration.class)
+					告知容器ioc创建是基于注解还是基于配置，并说明位置
+					location：指定xml文件的位置，加上classpath关键字 表示在类路径下
+					classes：指定注解类所在的位置
+					
+					注意：
+						使用注解配置的测试类 @ContextConfigration(classes=SpringConfigration.class)
+						使用配置文件的测试类 @ContextConfigration（location：指定xml文件的位置，加上classpath关键字
+																	表示在类路径下）
+			使用spring 5.x版本的时候  要求junit必须是4.12及以上
+		
+		
+		
+@Qualifier的另一种用法
+			在形式参数前使用@Qualifier（“beanId"）,给参数注入值
+			
+			
+spring的aop
+	引出案例：转账案例的问题，多步操作使用的是不同的connection连接对象
+				会出现不一致问题
+				解决 1. 把connection对象与线程绑定 （一个线程只能使用一个连接对象） 
+					2. 创建一个事务控制的类，里面提供一些方法，包括事务处理完
+						线程和连接对象的解绑	
+					3.账户实例类改造方法，使其支持事务
+					
+				事务控制从持久层变成业务层  测试可以通过
+				
+	动态代理知识加强：
+		 动态代理：
+         *  特点：字节码随用随创建，随用随加载
+         *  作用：不修改源码的基础上对方法增强
+         *  分类：
+         *      基于接口的动态代理
+         *      基于子类的动态代理
+         *  基于接口的动态代理：
+         *      涉及的类：Proxy
+         *      提供者：JDK官方
+         *  如何创建代理对象：
+         *      使用Proxy类中的newProxyInstance方法
+         *  创建代理对象的要求：
+         *      被代理类最少实现一个接口，如果没有则不能使用
+         *  newProxyInstance方法的参数：
+         *      ClassLoader：类加载器
+         *          它是用于加载代理对象字节码的。和被代理对象使用相同的类加载器。固定写法。
+         *      Class[]：字节码数组
+         *          它是用于让代理对象和被代理对象有相同方法。固定写法。
+         *      InvocationHandler：用于提供增强的代码
+         *          它是让我们写如何代理。我们一般都是些一个该接口的实现类，通常情况下都是匿名内部类，但不是必须的。
+         *          此接口的实现类都是谁用谁写。
+		 eg：IProducer proxyProducer = (IProducer) Proxy.newProxyInstance(producer.getClass().getClassLoader(),
+                producer.getClass().getInterfaces(),
+                new InvocationHandler() {
+                    /**
+                     * 作用：执行被代理对象的任何接口方法都会经过该方法
+                     * 方法参数的含义
+                     * @param proxy   代理对象的引用
+                     * @param method  当前执行的方法
+                     * @param args    当前执行方法所需的参数
+                     * @return        和被代理对象方法有相同的返回值
+                     * @throws Throwable
+                     */
+                    @Override
+                    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                        //提供增强的代码
+                        Object returnValue = null;
+
+                        //1.获取方法执行的参数
+                        Float money = (Float)args[0];
+                        //2.判断当前方法是不是销售
+                        if("saleProduct".equals(method.getName())) {
+                            returnValue = method.invoke(producer, money*0.8f);
+                        }
+                        return returnValue;
+                    }
+                });
+        proxyProducer.saleProduct(10000f);
+		基于接口：弊端。如果类没有实现接口，就会出现代理异常		
+		基于子类的动态代理
+				需要添加依赖  cglib	 
+		基于子类的动态代理：
+         *      涉及的类：Enhancer
+         *      提供者：第三方cglib库
+         *  如何创建代理对象：
+         *      使用Enhancer类中的create方法
+         *  创建代理对象的要求：
+         *      被代理类不能是最终类
+         *  create方法的参数：
+         *      Class：字节码
+         *          它是用于指定被代理对象的字节码。
+         *
+         *      Callback：用于提供增强的代码
+         *          它是让我们写如何代理。我们一般都是些一个该接口的实现类，通常情况下都是匿名内部类，但不是必须的。
+         *          此接口的实现类都是谁用谁写。
+         *          我们一般写的都是该接口的子接口实现类：MethodInterceptor
+         */
+        Producer cglibProducer = (Producer)Enhancer.create(producer.getClass(), new MethodInterceptor() {
+            /**
+             * 执行北地阿里对象的任何方法都会经过该方法
+             * @param proxy
+             * @param method
+             * @param args
+             *    以上三个参数和基于接口的动态代理中invoke方法的参数是一样的
+             * @param methodProxy ：当前执行方法的代理对象
+             * @return
+             * @throws Throwable
+             */
+            @Override
+            public Object intercept(Object proxy, Method method, Object[] args, MethodProxy methodProxy) throws Throwable {
+                //提供增强的代码
+                Object returnValue = null;
+
+                //1.获取方法执行的参数
+                Float money = (Float)args[0];
+                //2.判断当前方法是不是销售
+                if("saleProduct".equals(method.getName())) {
+                    returnValue = method.invoke(producer, money*0.8f);
+                }
+                return returnValue;
+            }
+        });
+        cglibProducer.saleProduct(12000f);		
+		此时，业务层不需要事务控制相关的属性了	也就是说业务层和事务控制分离了	要测试前还需要补全配置文件
+				具体代码笔记有
+	spring的aop	：
+		面向切面编程：实现方法，使用动态代理   
+		优点：增强代码的可重用性  减少重复代码  提高开发效率 维护方便
+		spring通过配置实现，也是注解和配置文件方式两种		
+		要求被代理类不能是最终类
+		接口至少有实现一个  且final修饰
+	相关术语	
+		连接点 
+		切入点
+		通知（增强）
+		引介
+		目标对象（被代理对象）
+		织入
+		proxy（代理对象）（被代理对象被增强后就变成代理对象）
+		切面：切入点和通知（引介）的结合  
+				切面可以理解为编写怎么增强对象方法的那个方法的过程
+				
+		环绕通知与切入点方法调用（截图）==================================？
+		
+	**基于配置实现的aop	
+		1.配置pom，配置打包方式   配置依赖2个
+		2.编写业务层接口
+		3.写实现类
+		3.准备一个具有公共代码的类（案例用于记录日志）
+		4.配置bean。xml     先从ioc开始配置  然后配置aop （下面）
+		5.配置文件写完，就可以写测试类来测试
+	配置文件：
+		<?xml version="1.0" encoding="UTF-8"?>
+		<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <!-- 配置srping的Ioc,把service对象配置进来-->
+    <bean id="accountService" class="com.itheima.service.impl.AccountServiceImpl"></bean>
+
+    <!--spring中基于XML的AOP配置步骤
+        1、把通知Bean也交给spring来管理
+        2、使用aop:config标签表明开始AOP的配置
+        3、使用aop:aspect标签表明配置切面
+                id属性：是给切面提供一个唯一标识
+                ref属性：是指定通知类bean的Id。
+        4、在aop:aspect标签的内部使用对应标签来配置通知的类型
+               我们现在示例是让printLog方法在切入点方法执行之前之前：所以是前置通知
+               aop:before：表示配置前置通知
+                    method属性：用于指定Logger类中哪个方法是前置通知
+                    pointcut属性：用于指定切入点表达式，该表达式的含义指的是对业务层中哪些方法增强
+
+            切入点表达式的写法：
+                关键字：execution(表达式)
+                表达式：
+                    访问修饰符  返回值  包名.包名.包名...类名.方法名(参数列表)
+                标准的表达式写法：
+                    public void com.itheima.service.impl.AccountServiceImpl.saveAccount()
+                访问修饰符可以省略
+                    void com.itheima.service.impl.AccountServiceImpl.saveAccount()
+                返回值可以使用通配符，表示任意返回值
+                    * com.itheima.service.impl.AccountServiceImpl.saveAccount()
+                包名可以使用通配符，表示任意包。但是有几级包，就需要写几个*.
+                    * *.*.*.*.AccountServiceImpl.saveAccount())
+                包名可以使用..表示当前包及其子包
+                    * *..AccountServiceImpl.saveAccount()
+                类名和方法名都可以使用*来实现通配
+                    * *..*.*()
+                参数列表：
+                    可以直接写数据类型：
+                        基本类型直接写名称           int
+                        引用类型写包名.类名的方式   java.lang.String
+                    可以使用通配符表示任意类型，但是必须有参数
+                    可以使用..表示有无参数均可，有参数可以是任意类型
+                全通配写法：
+                    * *..*.*(..)
+
+                实际开发中切入点表达式的通常写法：
+                    切到业务层实现类下的所有方法
+                        * com.itheima.service.impl.*.*(..)
+    -->
+
+    <!-- 配置Logger类 -->
+    <bean id="logger" class="com.itheima.utils.Logger"></bean>
+
+    <!--配置AOP-->
+    <aop:config>
+        <!--配置切面 -->
+        <aop:aspect id="logAdvice" ref="logger">
+            <!-- 配置通知的类型，并且建立通知方法和切入点方法的关联-->
+            <aop:before method="printLog" pointcut="execution(* com.itheima.service.impl.*.*(..))">
+			</aop:before>
+        </aop:aspect>
+    </aop:config>
+
+</beans>
+	以上已经是aop基于注解配置的入门
+	通知的几种类型：
+		<!--配置AOP-->
+    <aop:config>
+        <!-- 配置切入点表达式 id属性用于指定表达式的唯一标识。expression属性用于指定表达式内容
+              此标签写在aop:aspect标签内部只能当前切面使用。
+              它还可以写在aop:aspect外面，此时就变成了所有切面可用
+          -->
+        <aop:pointcut id="pt1" expression="execution(* com.itheima.service.impl.*.*(..))"></aop:pointcut>
+        <!--配置切面 -->
+        <aop:aspect id="logAdvice" ref="logger">
+            <!-- 配置前置通知：在切入点方法执行之前执行
+            <aop:before method="beforePrintLog" pointcut-ref="pt1" ></aop:before>-->
+
+            <!-- 配置后置通知：在切入点方法正常执行之后值。它和异常通知永远只能执行一个
+            <aop:after-returning method="afterReturningPrintLog" pointcut-ref="pt1"></aop:after-returning>-->
+
+            <!-- 配置异常通知：在切入点方法执行产生异常之后执行。它和后置通知永远只能执行一个
+            <aop:after-throwing method="afterThrowingPrintLog" pointcut-ref="pt1"></aop:after-throwing>-->
+
+            <!-- 配置最终通知：无论切入点方法是否正常执行它都会在其后面执行
+            <aop:after method="afterPrintLog" pointcut-ref="pt1"></aop:after>-->
+
+            <!-- 配置环绕通知 详细的注释请看Logger类中-->
+            <aop:around method="aroundPringLog" pointcut-ref="pt1"></aop:around>
+        </aop:aspect>
+    </aop:config>
+	
+	环绕通知：
+	/**
+     * 环绕通知
+     * 问题：
+     *      当我们配置了环绕通知之后，切入点方法没有执行，而通知方法执行了。
+     * 分析：
+     *      通过对比动态代理中的环绕通知代码，发现动态代理的环绕通知有明确的切入点方法调用，而我们的代码中没有。
+     * 解决：
+     *      Spring框架为我们提供了一个接口：ProceedingJoinPoint。该接口有一个方法proceed()，此方法就相当于明确调用切入点方法。
+     *      该接口可以作为环绕通知的方法参数，在程序执行时，spring框架会为我们提供该接口的实现类供我们使用。
+     *
+     * spring中的环绕通知：
+     *      它是spring框架为我们提供的一种可以在代码中手动控制增强方法何时执行的方式。
+     */
+    @Around("pt1()")
+    public Object aroundPringLog(ProceedingJoinPoint pjp){
+        Object rtValue = null;
+        try{
+            Object[] args = pjp.getArgs();//得到方法执行所需的参数
+
+            System.out.println("Logger类中的aroundPringLog方法开始记录日志了。。。前置");
+
+            rtValue = pjp.proceed(args);//明确调用业务层方法（切入点方法）
+
+            System.out.println("Logger类中的aroundPringLog方法开始记录日志了。。。后置");
+
+            return rtValue;
+        }catch (Throwable t){
+            System.out.println("Logger类中的aroundPringLog方法开始记录日志了。。。异常");
+            throw new RuntimeException(t);
+        }finally {
+            System.out.println("Logger类中的aroundPringLog方法开始记录日志了。。。最终");
+        }
+    }
+}
+	有一个疑问切入点方法怎么执行=============================================？？
+	基于注解的aop实现已经结束
+
+	下面是基于注解的aop实现
+		新建工程 配置pom  拷贝代码
+		使用注解  1.扫描的包  2.注释切面   3.通知（建议使用环绕通知）
+		
+		 @Pointcut("execution(* com.itheima.service.impl.*.*(..))")
+		 private void pt1(){}
+
+		
+		
+		<!-- 配置spring创建容器时要扫描的包-->
+		<context:component-scan base-package="com.itheima"></context:component-scan>
+
+		<!-- 配置spring开启注解AOP的支持 -->
+		<aop:aspectj-autoproxy></aop:aspectj-autoproxy>
+	
+	
+	
+	**实体类的创建步骤；一般要实现Seri接口，属性，get和set toString
+	
+	jdbctemple
+		基本用法：（需要配置jdbctemplate  里面需要注入数据源 所以还需要配置数据源）
+			1.获取容器
+				（spring）
+			2.获取对象
+				（jdbcTemplate）
+			3.执行操作
+				uodata
+				query
+		
+			
+		eg：
+		//1.获取容器
+        ApplicationContext ac = new ClassPathXmlApplicationContext("bean.xml");
+        //2.获取对象
+        JdbcTemplate jt = ac.getBean("jdbcTemplate",JdbcTemplate.class);
+        //3.执行操作
+        //保存
+//        jt.update("insert into account(name,money)values(?,?)","eee",3333f);
+        //更新
+//        jt.update("update account set name=?,money=? where id=?","test",4567,7);
+        //删除
+//        jt.update("delete from account where id=?",8);
+        //查询所有
+//        List<Account> accounts = jt.query("select * from account where money > ?",new AccountRowMapper(),1000f);
+//        List<Account> accounts = jt.query("select * from account where money > ?",new BeanPropertyRowMapper<Account>(Account.class),1000f);
+//        for(Account account : accounts){
+//            System.out.println(account);
+//        }
+        //查询一个
+//        List<Account> accounts = jt.query("select * from account where id = ?",new BeanPropertyRowMapper<Account>(Account.class),1);
+//        System.out.println(accounts.isEmpty()?"没有内容":accounts.get(0));
+
+        //查询返回一行一列（使用聚合函数，但不加group by子句）
+        Long count = jt.queryForObject("select count(*) from account where money > ?",Long.class,1000f);
+        System.out.println(count);	
+	
+		/**
+		 * 账户的持久层实现类
+		 */
+		@Repository
+		public class AccountDaoImpl2 implements IAccountDao {
+
+			@Autowired
+			private JdbcTemplate jdbcTemplate;
+
+
+			@Override
+			public Account findAccountById(Integer accountId) {
+				List<Account> accounts = jdbcTemplate.query("select * from account where id = ?",new BeanPropertyRowMapper<Account>(Account.class),accountId);
+				return accounts.isEmpty()?null:accounts.get(0);
+			}
+
+			@Override
+			public Account findAccountByName(String accountName) {
+				List<Account> accounts = jdbcTemplate.query("select * from account where name = ?",new BeanPropertyRowMapper<Account>(Account.class),accountName);
+				if(accounts.isEmpty()){
+					return null;
+				}
+				if(accounts.size()>1){
+					throw new RuntimeException("结果集不唯一");
+				}
+				return accounts.get(0);
+			}
+
+			@Override
+			public void updateAccount(Account account) {
+				jdbcTemplate.update("update account set name=?,money=? where id=?",account.getName(),account.getMoney(),account.getId());
+			}
+			
+		优化：
+			实现类的代码有冗余  
+			1.可以使用父类抽取相同的代码，其余实现类去继承
+			2.也可以使用继承spring提供的类的方法来减少重复代码
+		注意：如果采用注解配置，则使用继承   如果使用配置 则用继承的方法
+		
+	AOP实现事务控制和spring实现事务控制，，全注解使用事务
+		AOP：
+			 1.配置事务管理器（需要注入哟个类）
+			 2.配置aop
+				a.切点表达式
+				b.配置切面（开启 提交 回滚 释放连接 ）
+				
+		spring实现事务的控制：
+			1。配置pom ，打包方式，导入spring容器jar包 
+				导入spring-jdbc，导入spring-tx，导入数据库连接mysql-connector-java
+				导入aspectjweaver
+			2.准备代码（jdbctemp的）（事务控制是在业务层的）
+				（如果要用jnit，需要导包两个  junit 和spring-text）
+			3.代码整个拷贝在05xml里   事务的配置建议使用xml来配置
+			
+		全注解使用事务：（事务的配置建议使用xml来配置）
+		
+	补充：
+		切换jdk：
+			1.1.  file---文件结构--文件--文件sdk和文件语言等级  选1.7和7              
+			2.   file---文件结构--模板--资源  --语言等级                       1.7          
+			3.file--setting---构建 执行 部署  --compiler --java compiler--target bytecode version 选1.7
+			
+		
+SpringMVC：（重点：入门程序的步骤  参数绑定和常用注解也很重要）
+
+	知识点：
+		1.服务器端的三层框架
+			表现层（SpringMVC） 业务层(Spring) 持久层（Mybatis）
+			
+		2.MVC设计模式：
+			M model 模型  javabean
+			V view  视图  JSP
+			C Controller 控制器 servlet
+		SpringMVC 与 Struts2 的共同点和区别：
+			共同点：
+				他们都是表现层框架
+				底层都离不开原始的servleAPI
+				* 处理请求的机制都是一个核心控制器
+			区别：
+				* Spring MVC 的入口是servlet struts2是Filter
+				* 前者是基于MVC设计的 后者是基于类设计的 
+				  Struts2每次执行都会创建一个动作类 所以速度会比较慢
+				* MVC使用更加简洁 支持JSR303 处理ajax的请求更方便  
+				* 后者的PGNL表达式使得页面开发效率比MVC更高一些 但执行执行效率没有比JSTL提升
+					尤其是struts2的表单属性 远没有html的执行效率高
+			
+		流程：基于组件方式执行流程 
+			前端请求————》	前端控制器（dispatcheServlet）————》 处理器映射器（HandMapping）（Controller类的方法）
+			————》返回前端控制器————》处理器适配器（HandlerAdaptter）————》处理器（Controller）————》
+			返回success。jsp到处理器适配器————》返回到前端控制器————》视图解析器————》返回前端控制器
+			————》视图————》前端控制器————》response
+			
+		《mvc:annotation-driven》	
+			mvc组件中  处理器映射器  处理器适配器（HandlerAdaptter   视图解析器称为spring、mvc三大组件
+			使用该标签自动加载前两个组件
+
+
+		
+	环境搭建：
+		1.创建maven工程 选择webapp骨架    
+		2.完善pom  改编译版本1.8    增加版本锁定    导入jar包。     
+		3. 配置前端控制器（servlet） ：在web.xm中配置   
+			<servlet><servlet-mapping>(DispatcherServlet)     
+		4. 新建springmvc配置文件     
+		5.配置tomcat
+	代码编写：
+		1.准备默认首页 提供一个连接
+		2.新建一个控制器类（Contorller）
+			写方法 返回字符串
+			a.因为需要执行方法  所以需要把类变成对象（此时需要两个注解+配置ioc）
+				springmvc.xml：   导入约束
+								  开启注解扫描
+									《contest：component-scan base-package=“”cn。itcast》
+									
+									给类加注解@Controller
+									给方法加注解@RequestMapper（path=“hello”）
+		3.在web.xml中的前端控制器servlet里  加一组全局变量
+			《init-parm》
+				<param-name>contestConfiglocation
+				<param-value>classpath：配置文件名
+			《/init》
+			《load-on-statup》1
+			
+		4.提供jsp文件（在web-inf/pages下提供）
+			
+		
+		5.配置视图解析器
+			《bean id  class=“internalResourViewResolver”》
+				《property name="prefix" value="文件路径" 》
+				《property naem  value=".jsp" 》
+		6.建议再配置开启springMVC框架的支持
+			《mvc：annotation-driver》
+	
+	
+	
+	springmvc常用注解：
+		@request  位置是参数
+				属性： 
+					name=“”（name的值和页面传过来的参数要一样）
+					request：要求一定要有参数 且名字一样
+		@requestBody （Ajax）
+			位置：形参之前  表示把请求体复制给该参数
+		@PathValue
+			使用于rest风格：
+			eg：
+				后台控制器代码：
+				@requestMapping("/testPathValue/{sid}")
+				public String testPathValue(@PathValue(name="sid}") String id ){
+				
+				}
+				前端页面代码：
+					《a href=“anno/testPathValue/10”》《/a》
+			
+				不同方法的访问路径相同 以请求访问方式区分，或者携带别的参数 比如/user/{id}
+		@过滤器可以改变请求方式（了解）
+		@requestheader  获取请求头（用的不多）
+		@cookieValue（用的不多）
+			获取指定cookie的值
+		@ModelAttribure
+			位置：方法 参数（参数共享）
+			方法：优先于控制器执行
+			参数： 参数共享
+		@SessionAttribute	
+		eg：在方法使用 该方法封装了一个名为abc的user对象，放在map集合里
+			在控制器方法的参数列表 可以使用该注释 根据key值来获取对应的user
+			@modelAttribute（“abc”）
+		
+	
+
+
+		
+	配置中文乱码过滤器：
+		1.web。xml中配置
+			《filter》
+				《filter-name》
+				《filter-class》org.springframework.web.filter.CharacterEncodingFilter
+			《filter-mapper》
+				《filter-name》
+				《url-pattern》/*
+		2.提供参数
+			在filter-class下提供
+				《init-param》
+					《param-name》encoding
+					《param-value》UTF-8
+		
+	请求参数封装到集合：
+		前端代码：标签的name=“list【0】.
+		
+	自定义类型转换器：
+		1.新建包和类  实现Conveter  实现方法
+		2.配置类型转换器（spring给的类 需要注入自己写的类）
+
+	获取原生的API:在参数列表中添加
+		
+	响应数据和结果视图
+	
+	   1.前端获取后台数据	${user.username}
+		后台需要model。addAttribute（“user”，user）	
+		（前端发请求    后台封装到Model对象里   对象自动存放到request域里     然后 转发到页面  页面再取值  以后常用的开发方式）
+		上面是 返回字符串类型
+	
+	   2. 返回ModelAndView
+			用法：1.mv.addObject（）	//把对象
+				  2.mv.setViewName("success")
+				  3.retrun mv
+				把对象存入mv对象中  mv对象会把对象存入request对象中
+				然后设置跳转页面    返回mv对象
+				
+	   3.请求转发：
+			return “forward：/WEB-INF/pages/success.jsp”；
+	   
+	   4.重定向：
+			return：“redirect：/index.jsp”；
+			
+	   5.@ResponseBody注解
+			响应jsion数据
+						在后台的参数前使用  表示接受的数据类型是json
+						在方法返回值前使用  表示返回的类型是json数据类型
+			补充：json需要的jar包：jackson-annotation-2.90
+									jackson-databind-2.90
+									jackson-core-2.9.0
+			
+	   6.配置前端控制器：
+			作用：保护一些资源不被拦截
+			过程：
+				直接使用标签
+					<mvc:resource location="/css/" mapping="/css/**">
+	   7.开启springMVC框架注解的支持
+			<mvc:annotation-driven/>
+	   
+	   8.前端解析json数据的代码：
+			 // 页面加载，绑定单击事件
+			$(function(){
+				$("#btn").click(function(){
+					// alert("hello btn");
+					// 发送ajax请求
+					$.ajax({
+						// 编写json格式，设置属性和值
+						url:"user/testAjax",
+						contentType:"application/json;charset=UTF-8",
+						data:'{"username":"hehe","password":"123","age":30}',
+						dataType:"json",
+						type:"post",
+						success:function(data){
+							// data服务器端响应的json的数据，进行解析
+							alert(data);
+							alert(data.username);
+							alert(data.password);
+							alert(data.age);
+						}
+					});
+
+				});
+			});
+	   
+	   
+	springMVC上传文件：（案例有代码）
+		前提：1.表单的enctype类型取值必须是：multipart/form-data
+				该类型是表单请求正文的类型
+			  2.method属性的取值必须是post
+			  3.《input type=“file”/》			  
+			  4. 两组jar包
+					commons-fileupload
+					conmons-io
+		过程：1.搭建环境 新建web项目（骨架）  加一组键值对  
+				配置pom  编译版本改1.8       
+				在web.xml配置 前端控制器（复制）         
+				提高springmvc配置文件（完善文件结构）   
+				写页面（重写jsp    和控制器）         
+				控制器写方法（加两个注解） 
+				写解析器跳转的页面        
+		
+		配置文件上传解析器
+			见代码
+		需要导入jar包：  jersey-core   jerser-client
+		补充：如果没有创建文件夹得代码 则需要自己在target目录里面的某个位置创建   否则会报409的错
+		archetypeCatalog   internal
+	
+	异常处理：
+		搭建：1. 导入jar包    2. web。xml配置前端控制器    3.提高springmvc配置文件
+		演示异常处理
+		首页写完  再补一个给解析器跳转的success。jsp就可以开始测试了（开启服务器）
+		异常处理器组件
+		写异常处理器
+		配置异常处理器（自己的类写入容器）
+		注意前端的代码  页面的java后 需要加一个属性 isELIgnnored=“false"
+	拦截器：
+		1.编写拦截器类 实现接口HandleInterceptor
+		2.配置拦截器
+	springmvc配置拦截器：（ctral+0   重写方法）
+		<mvc:interceptors>
+			<mvc:interceptor>
+				<mvc:mapping path="">     //要拦截的具体方法
+				//《mvc:exclude-mapping path=""》
+				<bean class=”“>			 //配置拦截对象
+				
+	HandlerInterceptor接口中的方法 
+		1. preHandle方法是controller方法执行前拦截的方法. 
+			1.可以使用request或者response跳转到指定的页面 
+			2. return true放行，执行下一个拦截器，如果没有拦截器，执行controller中的方法。 
+			3. return false不放行，不会执行controller中的方法。 
+		2. postHandle是controller方法执行后执行的方法，在JSP视图执行前。
+			1. 可以使用request或者response跳转到指定的页面 
+			2. 如果指定了跳转的页面，那么controller方法跳转的页面将不会显示。 
+		3. postHandle方法是在JSP执行后执行 
+			1. request或者response不能再跳转页面			
+	
+	
+SSM框架整合：（必须会）（代码有完整的ssm）
+	思路：1.搭建开发环境 其中三个个环境需要先搭建 保证可以独立运行 之后开始整合   另外两个向spring整合
+		  2.springmvc整合  需要考虑的问题是
+				网页请求时  业务层需要ioc容器的对象  此时spring没有加载spring配置文件 不会创建容器
+				所以需要在web.xml中配置监听器  监听服务器某个对象的创建 创建时加载spring配置文件
+		  3.Mybatis与spring的整合 需要考虑的问题是	
+				业务层需要能够调用dao  dao对象存入容器
+				把sqlnapConfig配置文件的配置转移到spring的配置文件（配置后sqlmapc配置文件可以删掉）
+
+	整合步骤：
+		1.搭建spring开发环境（业务层框架）
+				1.maven工程   导入jar包    导入配置    导入log4j
+				2.写实体类（javabean）（实现接口）
+				3.写实体类接口  
+					@Repository
+					@Select
+				4.写service层接口
+					
+				5.service实现类
+					@Service
+					注入dao@Autowired （service里需要调用dao的方法 所以需要dao实现类的对象 ）
+					
+				6.写前端控制器	
+					本质时servlet，作用是接受前端的请求路径，路径对应方法
+					@Controller
+					@RequestMapping  一般是二级结构 类一级 方法一级
+					@Autowired    （控制器有时候需要调用业务层的方法  所以需要service对象 用注解注入）
+				
+				7.写spring配置文件
+					1.导入约束   2.开启扫描（控制器类不扫描）   
+						<context:component-scan base-package="cn.itcast">
+							<context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+						</context:component-scan>
+				8.测试	（此时没有注入dao  只是验证业务层环境是否搭建成功）
+					//加载配置文件
+					ClassPathXmlApplicationContext ac = new ClassPathXmlApplicationContext("classpath:applicationcontext.xml");
+					//获取对象
+					IAccountService as =(IAccountService) ac.getBean("accountService");
+					//执行
+					as.findAll();
+				
+		2.搭建springMVC环境
+				1.配置前端控制器（配置servlet DispatcherServlet 多一步加载mvc配置文件 load-on-startup）（web。xml）
+						<servlet>
+							<servlet-name>dispatcherServlet</servlet-name>
+							<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+							<!--加载springmvc.xml配置文件-->
+							<init-param>
+								<param-name>contextConfigLocation</param-name>
+								<param-value>classpath:springmvc.xml</param-value>
+							</init-param>
+							<!--启动服务器，创建该servlet-->
+							<load-on-startup>1</load-on-startup>
+						</servlet>
+						<servlet-mapping>
+							<servlet-name>dispatcherServlet</servlet-name>
+							<url-pattern>/</url-pattern>
+						</servlet-mapping>
+				2.写springmvc配置文件
+						1.开启注解扫描
+							<!--开启注解扫描-->
+							<context:component-scan base-package="cn.itcast">
+								<context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+							</context:component-scan>
+							
+						2.<!--配置视图解析器-->
+							<bean id="internalResourceViewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+								<property name="prefix" value="/WEB-INF/pages/"/>
+								<property name="suffix" value=".jsp"/>
+							</bean>
+							
+						3.<!--过滤静态资源-->
+							<mvc:resources location="/css/" mapping="/css/**" />
+							<mvc:resources location="/images/" mapping="/images/**" />
+							<mvc:resources location="/js/" mapping="/js/**" />
+						
+						4.<!--开启springmvc注解的支持-->
+							<mvc:annotation-driven/>
+						
+				3.<!--解决中文乱码的过滤器-->（CharacterEncodingFilter）（web。xml）
+						<filter>
+							<filter-name>characterEncodingFilter</filter-name>
+							<filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+							<init-param>
+								<param-name>encoding</param-name>
+								<param-value>UTF-8</param-value>
+							</init-param>
+						</filter>
+						<filter-mapping>
+							<filter-name>characterEncodingFilter</filter-name>
+							<url-pattern>/*</url-pattern>
+						</filter-mapping>
+				
+				4.写前端页面开始测试
+					注意：小节 前端控制器的本质是一个servlet（dispitureservlet） 
+					所以配置前端控制器也就是配置这个servlet   其中遇到报错 
+					把web配置文件的中文乱码过滤器注释掉就可以
+				
+		3 spring与springmvc的整合
+				1. 开启服务器的时候 需要加载spring配置文件
+					配置监听器加载spring配置文件（与配置servlet类似）
+						<!--配置Spring的监听器，默认只加载WEB-INF目录下的applicationContext.xml配置文件-->
+							<listener>
+								<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+							</listener>
+							<!--设置配置文件的路径-->
+							<context-param>
+								<param-name>contextConfigLocation</param-name>
+								<param-value>classpath:applicationContext.xml</param-value>
+							</context-param>
+							
+				2.实现依赖注入（业务层  这里指前端控制器  ）
+					控制器类上注解 
+						@Controller
+						@RequestMapping("/account")
+	
+					成员对象 （业务层对象）AccountService
+						@Autowired
+						
+					方法 （二级路径）
+						 @RequestMapping("/findAll")
+						
+		4 搭建mybatis环境		
+				1.给接口 写注解（也可以使用配置文件）
+						@Select
+					
+				2. 编写mybatis核心配置文件（整合后需要删除  实际开发建议直接整合）
+						
+						三部分：约束 环境  映射
+						<?xml version="1.0" encoding="UTF-8"?>
+						<!DOCTYPE configuration
+								PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+								"http://mybatis.org/dtd/mybatis-3-config.dtd">
+						<configuration>
+							<environments default="mysql">
+								<environment id="mysql">
+									<transactionManager type="JDBC"></transactionManager>
+									<dataSource type="POOLED">
+										<property name="driver" value="com.mysql.jdbc.Driver"/>
+										<property name="url" value="jdbc:mysql:/3366/ssm"/>
+										<property name="username" value="root"/>
+										<property name="password" value="124546"/>
+									</dataSource>
+								</environment>
+							</environments>
+
+							<mappers>
+								<package name="cn.itcast.dao"/>
+							</mappers>
+						</configuration>
+				3.测试（记得除了查找的操作 其余的操作需要提交  否则操作成功 但是数据库没有保存）
+						// 加载配置文件
+						InputStream in = Resources.getResourceAsStream("SqlMapConfig.xml");
+						// 创建SqlSessionFactory对象
+						SqlSessionFactory factory = new SqlSessionFactoryBuilder().build(in);
+						// 创建SqlSession对象
+						SqlSession session = factory.openSession();
+						// 获取到代理对象
+							IAccountDao dao = session.getMapper(IAccountDao.class);
+						// 查询所有数据
+						List<Account> list = dao.findAll();
+						for(Account account : list){
+							System.out.println(account);
+						}
+						// 关闭资源
+						session.close();
+						in.close();
+		
+		spring与Mybatis整合：
+				思想 ：service能够调用dao 换句话说  就是按mybatis测试时需要哪些类 把这些类加载到容器里
+				分析：  service能够调用dao   dao的代理对象存入ioc容器
+				
+				步骤：
+					1.整合两个的配置文件（spring里写mybatis的配置文件）
+							1.配置来凝结池
+									<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+										<property name="driverClass" value="com.mysql.jdbc.Driver"/>
+										<property name="jdbcUrl" value="jdbc:mysql://localhost:3366/ssm"/>
+										<property name="user" value="root"/>
+										<property name="password" value="124546"/>
+									</bean>
+							2.配置sql工厂
+									<!--配置SqlSessionFactory工厂-->
+									<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+										<property name="dataSource" ref="dataSource" />
+									</bean>
+							3.配置接口所在的包
+									<bean id="mapperScanner" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+										<property name="basePackage" value="cn.itcast.dao"/>
+									</bean>
+									
+					2. 依赖注入
+							业务层实现类 
+								@Service("accountService")
+							业务层实现类成员属性
+								 @Autowired
+								 
+					3.添加声明式事务管理		 
+							1.在spring配置里配置
+									1. 配置事务管理器  《bean id   class=datasourcetransaction》  注入一个  数据源  
+											<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+												<property name="dataSource" ref="dataSource" />
+											</bean>
+											
+									2.事务的通知    《tx：advice》
+											<tx:advice id="txAdvice" transaction-manager="transactionManager">
+												<tx:attributes>
+													<tx:method name="find*" read-only="true"/>
+													<tx:method name="*" isolation="DEFAULT"/>
+												</tx:attributes>
+											</tx:advice>
+											
+									3.aop增强   
+										《aop：config》       《》切入点表达式
+										 <aop:config>
+											<aop:advisor advice-ref="txAdvice" pointcut="execution(* cn.itcast.service.Impl.*ServiceImpl.*(..))"/>
+										</aop:config>
+
+
+										
+SpringBoot：	
+			
+		快速入门：
+				1.创建maven
+						添加两个起步依赖
+								<!--所有的springboot工程都必须继承spring-boot-starter-parent-->
+								<parent>
+									<groupId>org.springframework.boot</groupId>
+									<artifactId>spring-boot-starter-parent</artifactId>
+									<version>2.0.1.RELEASE</version>
+								</parent>
+								<!--web功能的起步依赖-->
+								<dependency>
+									<groupId>org.springframework.boot</groupId>
+									<artifactId>spring-boot-starter-web</artifactId>
+								</dependency>		
+								<!--热部署配置-->
+								<dependency>
+									<groupId>org.springframework.boot</groupId>
+									<artifactId>spring-boot-devtools</artifactId>
+								</dependency>
+								
+				2.写引导类（注解 调用run  参数是自身）
+				
+						@SpringBootApplication
+						public class MySpringBootApplication {
+
+							public static void main(String[] args) {
+								SpringApplication.run(MySpringBootApplication.class);
+							}
+						}
+
+				3.写前端控制器
+						
+						@RestController
+						public class TestController {
+
+							@RequestMapping("/quick")
+							@ResponseBody
+							public String quick(){
+
+								return "nihao world";
+							}
+						}
+						
+				4.测试
+						运行main函数  浏览器访问
+				
+				
+			补充：
+				热部署	：idea需要设置（原因是idea本身不支持，不是依赖jar的问题） 
+							1. setting  执行 编译  的编译   自动构建 勾上    
+							2  ctrl + shift+alt  + /    选Registry     
+				
+		使用idea快速创建springboot项目
+				搭建后 引导类自动存在 搭建后 引导类自动存在
+				
+				新注解： @RestController
+				springbootConfig注解相当于三个注解  扫描 自动注入   还有  容器
+		
+		配置文件：
+			作用：
+				覆盖默认配置   properties yml  yaml 2种配置文件
+				位置  resources 创建application。xxx配置文件
+				一般用yml就可以
+			properties文件：    server.port=8081		
+			
+			yml：
+				普通的数据 name： zhansan
+				对象：
+					person：
+						name： zhansan
+						age： 18
+						address： beijing
+					//person： {name： zhangsan，age： 18}
+				配置数组：
+					city：
+						- beijing
+						- tianjing
+					//city： 【beijing，tianjing】
+					
+					students：
+						- name： tom
+						  age： 18
+						- name： lucy
+						  age： 17
+					//students： 【{name： tom，age： 18}，{}】
+					
+				配置Map
+					map:
+						key1: value1
+						key2: value2
+				
+				获取配置文件信息
+					在属性前加@value属性
+						@Value（“${naem}”）
+						private String naem；
+					
+					在类上加@ConfigurationPropertise（需要提高getter和setter方法）
+						@ConfigurationPropertise（prefix=“persion”）
+						public class xxx（）{
+						}
+						
+			配置执行器  防止报错		
+					g org.springframework.boot
+					a spring-boot-configuration-processor	
+					<optional>true</>	
+				配置后代码有提示
+						
+Springboot整合Mybatis和junit
+		整合mybatis
+			1.添加mybatis起步依赖
+				<!--mybatis起步依赖--> 
+				<dependency>
+					<groupId>org.mybatis.spring.boot</groupId> 
+					<artifactId>mybatis-spring-boot-starter</artifactId>  
+					<version>1.1.1</version> 
+				</dependency>
+				
+			2.添加数据库驱动坐标
+				<!-- MySQL连接驱动 --> 
+				<dependency> 
+					<groupId>mysql</groupId>   
+					<artifactId>mysql-connector-java</artifactId> 
+				</dependency>
+				
+			3.添加数据库连接信息（在application.properties中添加数据）
+				
+				#DB Configuration: 
+				spring.datasource.driverClassName=com.mysql.cj.jdbc.Driver 
+				spring.datasource.url=jdbc:mysql://localhost:3366/account?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC&useSSL=false
+				spring.datasource.username=root 
+				spring.datasource.password=124546
+				
+			4.创建数据库user表
+				-- Table structure for `user` -- ---------------------------
+				DROP TABLE IF EXISTS `user`; 
+				CREATE TABLE `user` (  
+				`id` int(11) NOT NULL AUTO_INCREMENT, 
+				`username` varchar(50) DEFAULT NULL, 
+				`password` varchar(50) DEFAULT NULL, 
+				`name` varchar(50) DEFAULT NULL, 
+				PRIMARY KEY (`id`) ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8;
+ 
+				-- ---------------------------
+				-- Records of user -- ---------------------------
+				INSERT INTO `user` VALUES ('1', 'zhangsan', '123', '张三'); 
+				INSERT INTO `user` VALUES ('2', 'lisi', '123', '李四');
+
+			5.创建实体类 编写接口dao（usermapper）
+				    // 主键  
+					private Long id;   
+					// 用户名   
+					private String username;    
+					// 密码 
+					private String password;   
+					// 姓名  
+					private String name;
+					
+			6.配置papper文件（下加入UserMapper.xml配置文件"）
+				
+				<?xml version="1.0" encoding="utf-8" ?>
+				<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+				"http://mybatis.org/dtd/mybatis-3-mapper.dtd" > 
+				<mapper namespace="com.itheima.mapper.UserMapper">  
+					<select id="queryUserList" resultType="user">    
+						select * from user 
+					</select> 
+				</mapper>
+				
+			7.在spring配置文件（properties）中添加mybatis配置信息
+				
+				#spring集成Mybatis环境
+				#pojo别名扫描包 
+				mybatis.type-aliases-package=com.itheima.domain 
+				#加载Mybatis映射文件 
+				mybatis.mapper-locations=classpath:mapper/*Mapper.xml
+				
+				
+			8.写前端控制器（需要注解 ： @Controller @Autowired  @RequestMapping("/queryUser")  
+					@ResponseBody ）
+				@Controller 
+				public class MapperController {
+ 
+					@Autowired  
+					private UserMapper userMapper;
+ 
+					@RequestMapping("/queryUser")  
+					@ResponseBody  
+					public List<User> queryUser(){
+					List<User> users = userMapper.queryUserList();
+					
+					return users;  
+				}
+ 
+}
+			9.测试
+		
+		集成junit
+			1.  导入起步依赖 
+				
+				<!--测试的起步依赖-->
+				<dependency>  
+					<groupId>org.springframework.boot</groupId> 
+					<artifactId>spring-boot-starter-test</artifactId>    
+					<scope>test</scope> 
+				</dependency>
+				
+			2.  可以开始测试  
+					@RunWith(SpringRunner.class)
+					@SpringBootTest(classes = MySpringBootApplication.class) 
+					public class MapperTest {
+ 
+						@Autowired 
+						private UserMapper userMapper;
+ 
+						@Test  
+						public void test() {     
+							List<User> users = userMapper.queryUserList();    
+							System.out.println(users);  
+						}
+ 
+					}
+			其中，
+				SpringRunner继承自SpringJUnit4ClassRunner
+				使用哪一个Spring提供的测试测试引擎都可以
+				
+				public final class SpringRunner extends SpringJUnit4ClassRunner 
+				
+				@SpringBootTest的属性指定的是引导类的字节码对象
+				
+				
+			注意：
+					/**
+					 * springboot整合junit
+					 *  导入jar包 需要加两个注解
+					 *      @RunWith(SpringRunner.class)
+					 *      @SpringBootTest
+					 *    两个注解都要加载类上，且只能在测试类里测试
+					 */
+					 
+					 
+					 
+框架一轮复习：
+	mybatis
+		resultmap：
+		
+		
+	spring
+		DI的注入方式建议写一个demo
+		
+		用于创建对象的注解
+			Component:
+				作用：用于把当前类对象存入spring容器中
+				属性：
+					value：用于指定这个对象（bean）的id  默认是当前类名，首字母小写
+			Controller: 一般用在表现层
+			
+			Service: 一般用在服务层
+			Repository:一般用在持久层
+			上面四个注解的后三个的作用和属性与第一个一模一样
+			
+			
+		用于注入数据的注解：
+			Autowrite
+			Resource
+			还有一个quilyfile不常用
+
+		Value:
+			作用：注入基本数据类型和String类型
+			属性：	
+				value：用于指定数据的值，也可以使用spring中的sqEL
+				sqEL写法： ${表达式}
+				
+		注解开发的注解还没有整理
+		
+		spring的全注解配置需要加强  看有无需要  （应该不需要 springboot 里面的spring配置是基于xml的）	
+			
+		aop建议二刷
+
+		全通配写法：
+                    * *..*.*(..)
+			
+		实际开发中切入点表达式的通常写法：
+                    切到业务层实现类下的所有方法
+                        * com.itheima.service.impl.*.*(..)	
+			
+		spring实现事务的控制：
+			1。配置pom ，打包方式，导入spring容器jar包 
+				导入spring-jdbc，导入spring-tx，导入数据库连接mysql-connector-java
+				导入aspectjweaver
+			2.准备代码（jdbctemp的）（事务控制是在业务层的）
+				（如果要用jnit，需要导包两个  junit 和spring-text）
+			3.代码整个拷贝在05xml里   事务的配置建议使用xml来配置		
+			
+		（springmvc往后的内容没有复习）
+		
+		
+国庆三天学linux（Linux笔记）
+		1.安装linux系统
+		2.调整内存（其中图形界面有最小内存要求）
+		3.调整光盘映像
+		4.快照
+		5.克隆（真实机的映像  连接克隆  完全克隆）
+		6.
+			
+			
+			
+			
+			
+			
+			
+			
